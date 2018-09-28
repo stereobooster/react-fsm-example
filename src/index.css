@@ -1,0 +1,30 @@
+:focus {
+  outline: none;
+  border-color: #2188ff;
+  box-shadow: 0 0 0 0.2em #c8e1ff;
+}
+
+[tabindex="-1"]:focus {
+  outline: none;
+  border: none;
+  box-shadow: none;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+  line-height: 1.15;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-text-size-adjust: 100%;
+  -ms-text-size-adjust: 100%;
+  -ms-overflow-style: scrollbar;
+}
+
+a {
+  text-decoration-skip: ink;
+}
