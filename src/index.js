@@ -7,6 +7,8 @@ import App from "./App";
 // import registerServiceWorker from './registerServiceWorker';
 import { Provider } from "react-redux";
 import { initStore } from "src/redux/store";
+import { Router } from "react-router-dom";
+import history from "src/history";
 
 const root = document.getElementById("root");
 if (!root) throw new Error("Can not find root");
@@ -16,7 +18,9 @@ const store = initStore();
 const render = Component =>
   ReactDOM.render(
     <Provider store={store}>
-      <Component />
+      <Router history={history}>
+        <Component />
+      </Router>
     </Provider>,
     root
   );
