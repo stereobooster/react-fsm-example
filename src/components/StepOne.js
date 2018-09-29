@@ -2,25 +2,33 @@
 import React, { Component } from "react";
 import { connect } from "react-redux";
 import StepOneForm from "./StepOneForm";
-import type { FruitWidget } from "src/types";
-import { type State, type Dispatch } from "src/redux";
+import StepOneResult from "./StepOneResult";
+import type { FruitForm } from "src/types";
+import { type Dispatch, type State, fruitSubmitSideEffect } from "src/redux";
 
 type Props = {
-  submit: (widget: FruitWidget) => void
+  state: State,
+  submit: (form: FruitForm) => void
 };
 
 class StepOne extends Component<Props> {
   render() {
-    const { submit } = this.props;
-    return <StepOneForm submit={submit} />;
+    const { submit, state } = this.props;
+    return (
+      <React.Fragment>
+        <StepOneForm submit={submit} />
+        <StepOneResult state={state} />
+      </React.Fragment>
+    );
   }
 }
 
 export default connect(
-  State => ({}),
+  (state: State) => ({ state }),
   (dispatch: Dispatch) => ({
-    submit: (widget: FruitWidget) => {
-      dispatch({ type: "SUBMIT_FRUIT", widget });
+    submit: (form: FruitForm) => {
+      dispatch({ type: "SUBMIT_FRUIT", form });
+      fruitSubmitSideEffect(dispatch, form);
     }
   })
 )(StepOne);

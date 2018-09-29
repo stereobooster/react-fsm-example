@@ -1,6 +1,6 @@
 // @flow
 
-import type { FruitWidget, FruitResponse } from "src/types";
+import type { FruitForm, FruitResponse } from "src/types";
 
 /**
  * State.state is not the brightest idea
@@ -11,7 +11,7 @@ export type State =
     |}
   | {|
       state: "fruit_loading",
-      widget: FruitWidget
+      form: FruitForm
     |}
   | {|
       state: "fruit_error",
@@ -19,7 +19,7 @@ export type State =
     |}
   | {|
       state: "fruit_ok",
-      widget: FruitWidget,
+      form: FruitForm,
       resonse: FruitResponse
     |};
 

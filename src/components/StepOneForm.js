@@ -1,6 +1,6 @@
 // @flow
 import React, { Component } from "react";
-import type { FruitWidget } from "src/types";
+import type { FruitForm } from "src/types";
 
 // General type to describe form
 type ToString = () => string;
@@ -16,9 +16,9 @@ type StateT<T> = {
 };
 
 // Exact types
-type Values = ValuesT<FruitWidget>;
-type Errors = ErrorsT<FruitWidget>;
-type State = StateT<FruitWidget>;
+type Values = ValuesT<FruitForm>;
+type Errors = ErrorsT<FruitForm>;
+type State = StateT<FruitForm>;
 
 // some date functions
 const today = () => {
@@ -29,7 +29,7 @@ const today = () => {
 const isValidDate = date => date instanceof Date && !isNaN(date);
 
 // this is ugly code to imitate what io-ts can do
-const validate = (values: Values): [Errors, FruitWidget | void] => {
+const validate = (values: Values): [Errors, FruitForm | void] => {
   const errors = {};
   let res = {};
   if (values.name.length <= 0) {
@@ -52,13 +52,13 @@ const validate = (values: Values): [Errors, FruitWidget | void] => {
     // Left<Errors>
     return [errors, undefined];
   } else {
-    // Right<FruitWidget>
+    // Right<FruitForm>
     return [{}, res];
   }
 };
 
 type Props = {
-  submit: FruitWidget => void
+  submit: FruitForm => void
 };
 
 class StepOne extends Component<Props, State> {
@@ -66,8 +66,9 @@ class StepOne extends Component<Props, State> {
     super(props);
     this.state = {
       values: {
-        name: "",
-        start: "" // new Date().toISOString().split("T")[0]
+        // defaults for simplicity
+        name: "apple",
+        start: new Date().toISOString().split("T")[0]
       },
       errors: {},
       touched: {},
@@ -113,7 +114,7 @@ class StepOne extends Component<Props, State> {
     });
   };
   render() {
-    const { values, errors, touched, isSubmitting } = this.state;
+    const { values, errors, touched } = this.state;
     const { handleSubmit, handleChange, handleBlur } = this;
     return (
       <div>
@@ -138,9 +139,7 @@ class StepOne extends Component<Props, State> {
             />
             {errors.start && touched.start && errors.start}
           </div>
-          <button type="submit" disabled={isSubmitting}>
-            Search
-          </button>
+          <button type="submit">Search</button>
         </form>
       </div>
     );

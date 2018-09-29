@@ -1,0 +1,5 @@
+[
+  { "name": "apple", "price": 1.99, "currency": "EUR" },
+  { "name": "plum", "price": 1.79, "currency": "EUR" },
+  { "name": "watermelon", "price": 1.05, "currency": "EUR" }
+]

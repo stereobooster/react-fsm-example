@@ -2,12 +2,12 @@
 import { type Dispatch as DispatchT } from "redux";
 import { exhaustiveCheck } from "src/utils";
 import { type State, defaultState } from "./state";
-import type { FruitWidget, FruitResponse } from "src/types";
+import type { FruitForm, FruitResponse } from "src/types";
 import { fruitRequest } from "src/api/fruitRequest";
 
 type FruitSubmit = {
   type: "SUBMIT_FRUIT",
-  widget: FruitWidget
+  form: FruitForm
 };
 type FruitError = {
   type: "SUBMIT_FRUIT_ERROR",
@@ -21,6 +21,23 @@ type FruitOk = {
 export type Actions = FruitSubmit | FruitError | FruitOk;
 export type Dispatch = DispatchT<Actions>;
 
+export const fruitSubmitSideEffect = (dispatch: Dispatch, form: FruitForm) => {
+  fruitRequest(form).then(
+    resonse => {
+      dispatch({
+        type: "SUBMIT_FRUIT_OK",
+        resonse
+      });
+    },
+    error => {
+      dispatch({
+        type: "SUBMIT_FRUIT_ERROR",
+        error
+      });
+    }
+  );
+};
+
 export default (reduxState: State = defaultState, action: Actions): State => {
   switch (action.type) {
     case "SUBMIT_FRUIT":
@@ -28,7 +45,7 @@ export default (reduxState: State = defaultState, action: Actions): State => {
         case "initial":
           return {
             state: "fruit_loading",
-            widget: action.widget
+            form: action.form
           };
         default:
           throw new Error("Inavlid transition");
