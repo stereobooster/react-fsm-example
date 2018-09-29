@@ -11,7 +11,8 @@
     "react-router-dom": "^4.3.1",
     "react-scripts": "2.0.0",
     "redux": "^4.0.0",
-    "redux-loop": "^4.4.1"
+    "redux-loop": "^4.4.1",
+    "sarcastic": "https://github.com/stereobooster/sarcastic#date"
   },
   "scripts": {
     "start": "react-scripts start",
