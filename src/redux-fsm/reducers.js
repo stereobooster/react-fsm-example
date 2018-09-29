@@ -53,7 +53,9 @@ export default (reduxState: State = defaultState, action: Actions): State => {
     case "SUBMIT_FRUIT_ERROR":
       switch (reduxState.state) {
         case "fruit_loading":
+          const { state, ...rest } = reduxState;
           return {
+            ...rest,
             state: "fruit_error",
             error: action.error
           };

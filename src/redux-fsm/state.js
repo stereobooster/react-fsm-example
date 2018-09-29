@@ -15,6 +15,7 @@ export type State =
     |}
   | {|
       state: "fruit_error",
+      form: FruitForm,
       error: mixed
     |}
   | {|
