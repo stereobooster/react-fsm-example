@@ -1,10 +1,12 @@
-# React example
+# Pragmatic types: How to turn Redux to Finite State Machine with the help of types
 
-## Demonstration of how to convert Redux to FSM with the help of types
+## What we want to do
 
-Task: we have a form where user enter can enter data, as soon as the user submits the form we need to show a spinner while AJAX request is running, as soon as AJAX request finishes show results in case of success or error in case of failure of the AJAX request.
+We want to build a form where the user can enter data, as soon as the user submits the form we need to show a loading state while AJAX request is running, as soon as AJAX request finishes show results in case of success or error in case of failure of the AJAX request.
 
-### "Classical" reducer
+Let's create a "classical" reducer for this task and "Finite State Machine" reducer so we can compare. Full code is in this repository.
+
+## "Classical" reducer
 
 This is how "classical" reducer can look like:
 
@@ -36,10 +38,14 @@ export default (reduxState: State = defaultState, action: Actions): State => {
 };
 ```
 
-This is actual AJAX request, a.k.a. side effect. We can use different solutions for side effects, like redux-thunk, redux-saga, redux-observable or redux-loop. Let's not focus on this, instead, we will trigger side effect explicitly with dispatch:
+`SUBMIT_FRUIT` is an action dispatched in response to the form submit.
+`SUBMIT_FRUIT_ERROR` and `SUBMIT_FRUIT_OK` are dispatched in response to side effect e.g. AJAX request. We can use different solutions for side effects, like redux-thunk, redux-saga, redux-observable or redux-loop. Let's not focus on this, instead, we will trigger side effect explicitly with dispatch.
+
+Here is how AJAX request can look lie:
 
 ```ts
 export const fruitSubmitSideEffect = (dispatch: Dispatch, form: FruitForm) => {
+  // uses fetch inside returns a Promise
   fruitRequest(form).then(
     resonse => {
       dispatch({
@@ -59,7 +65,7 @@ export const fruitSubmitSideEffect = (dispatch: Dispatch, form: FruitForm) => {
 // and later
 
 export default connect(
-  ) => ({}),
+  () => ({}),
   (dispatch: Dispatch) => ({
     submit: (form: FruitForm) => {
       dispatch({ type: "SUBMIT_FRUIT", form });
@@ -101,7 +107,7 @@ export default ({ state }: { state: State }) => {
   }
 ```
 
-### Finite State Machine
+## Finite State Machine
 
 Finite State Machine (FSM) suppose to have finite states. Let's force it with the type system. This is Flow type, but TypeScript would look similar (there is no need in `{||}` in TS).
 
@@ -196,6 +202,7 @@ fruit_ok
 > - You can prototype UI logic with [sketch.systems](https://sketch.systems/)
 > - [Use Alloy (lighter alternative to TLA+) to analyze your UI](https://www.hillelwayne.com/post/formally-specifying-uis/)
 > - This specification can be shared between UX people and developers
+> - Also, see [Verifying ReasonReact component logic — ReasonML & Imandra](https://medium.com/imandra/verifying-reasonreact-component-logic-reasonml-imandra-e350d4812a9f)
 
 > Side note 2: I implemented "reversed" FSM in the reducer, it checks action first and the state second
 
@@ -210,6 +217,10 @@ fruit_ok
 - cancel the previous request and launch a new one
 - launch a new one and forget about previous. This is basically what we did in "classical" approach, but this is also will lead to a situation (7) which is a race condition. Also, this approach introduces race condition in (1, 5) and (1, 4) scenarios.
 
+For this post, I selected to ignore it, as the simplest solution, maybe I will implement cancel in the in the next post.
+
 This is why you want to use FSM, this approach helps to find "holes" in logic. And the more states there are in the system, the more potential holes are hidden in there.
 
 If you think this is too much trouble to find those types of bugs, think of the typical IT support question: "Have you tried to turning it off and on again?". Yep, there is somewhere state related bug hidden and the way out is to restart the system to reset the state to initial state.
+
+On the other side, I would agree JS (or Flow or TS) syntax is a bit clumsy for this kind of task. Pattern matching with the switch is not expressive. Redux requires even more boilerplate than traditionally.

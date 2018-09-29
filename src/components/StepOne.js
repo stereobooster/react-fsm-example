@@ -1,5 +1,5 @@
 // @flow
-import React, { Component } from "react";
+import React from "react";
 import { connect } from "react-redux";
 import StepOneForm from "./StepOneForm";
 import StepOneResult from "./StepOneResult";
@@ -11,17 +11,12 @@ type Props = {
   submit: (form: FruitForm) => void
 };
 
-class StepOne extends Component<Props> {
-  render() {
-    const { submit, state } = this.props;
-    return (
-      <React.Fragment>
-        <StepOneForm submit={submit} />
-        <StepOneResult state={state} />
-      </React.Fragment>
-    );
-  }
-}
+const StepOne = ({ submit, state }: Props) => (
+  <React.Fragment>
+    <StepOneForm submit={submit} stateState={state.state} />
+    <StepOneResult state={state} />
+  </React.Fragment>
+);
 
 export default connect(
   (state: State) => ({ state }),

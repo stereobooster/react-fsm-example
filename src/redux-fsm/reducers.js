@@ -43,12 +43,20 @@ export default (reduxState: State = defaultState, action: Actions): State => {
     case "SUBMIT_FRUIT":
       switch (reduxState.state) {
         case "initial":
+        case "fruit_error":
+        case "fruit_ok":
           return {
             state: "fruit_loading",
             form: action.form
           };
+        case "fruit_loading":
+          // we don't allow more than one side effect same time
+          return reduxState;
         default:
-          throw new Error("Inavlid transition");
+          // exhaustive check doesn't work here, because "initial", "fruit_error"
+          // and "fruit_ok" are crumpled together
+          // exhaustiveCheck(reduxState.state);
+          return reduxState;
       }
     case "SUBMIT_FRUIT_ERROR":
       switch (reduxState.state) {
@@ -60,7 +68,7 @@ export default (reduxState: State = defaultState, action: Actions): State => {
             error: action.error
           };
         default:
-          throw new Error("Inavlid transition");
+          throw new Error("Impossible");
       }
     case "SUBMIT_FRUIT_OK":
       switch (reduxState.state) {
@@ -72,7 +80,7 @@ export default (reduxState: State = defaultState, action: Actions): State => {
             resonse: action.resonse
           };
         default:
-          throw new Error("Inavlid transition");
+          throw new Error("Impossible");
       }
     default:
       exhaustiveCheck(action.type);

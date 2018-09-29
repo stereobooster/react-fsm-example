@@ -1,6 +1,7 @@
 // @flow
 import React, { Component } from "react";
 import type { FruitForm } from "src/types";
+import { type StateState } from "src/redux";
 
 // General type to describe form
 type ToString = () => string;
@@ -8,12 +9,12 @@ type ToBoolean = () => boolean;
 type ValuesT<T> = $ObjMap<T, ToString>;
 type ErrorsT<T> = $Shape<$ObjMap<T, ToString>>;
 type TouchedT<T> = $Shape<$ObjMap<T, ToBoolean>>;
-type StateT<T> = {
+type StateT<T> = {|
   values: ValuesT<T>,
   errors: ErrorsT<T>,
   touched: TouchedT<T>,
   isSubmitting: boolean
-};
+|};
 
 // Exact types
 type Values = ValuesT<FruitForm>;
@@ -58,7 +59,8 @@ const validate = (values: Values): [Errors, FruitForm | void] => {
 };
 
 type Props = {
-  submit: FruitForm => void
+  submit: FruitForm => void,
+  stateState: StateState
 };
 
 class StepOne extends Component<Props, State> {
@@ -139,7 +141,12 @@ class StepOne extends Component<Props, State> {
             />
             {errors.start && touched.start && errors.start}
           </div>
-          <button type="submit">Search</button>
+          <button
+            type="submit"
+            disabled={this.props.stateState === "fruit_loading"}
+          >
+            Search
+          </button>
         </form>
       </div>
     );

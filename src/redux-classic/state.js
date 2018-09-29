@@ -15,3 +15,5 @@ export type State = {
 export const defaultState: State = {
   state: "initial"
 };
+
+export type StateState = $PropertyType<State, "state">;
