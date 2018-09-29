@@ -2,6 +2,9 @@
 
 import type { FruitWidget, FruitResponse } from "src/types";
 
+/**
+ * State.state is not the brightest idea
+ */
 export type State =
   | {|
       state: "initial"

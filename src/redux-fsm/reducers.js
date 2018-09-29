@@ -1,7 +1,7 @@
 //  @flow
 import { type Dispatch as DispatchT } from "redux";
 import { exhaustiveCheck } from "src/utils";
-import { type State, defaultState } from "src/redux/state";
+import { type State, defaultState } from "./state";
 import type { FruitWidget, FruitResponse } from "src/types";
 import { fruitRequest } from "src/api/fruitRequest";
 
@@ -21,22 +21,32 @@ type FruitOk = {
 export type Actions = FruitSubmit | FruitError | FruitOk;
 export type Dispatch = DispatchT<Actions>;
 
-export default (store: State = defaultState, action: Actions): State => {
+export default (reduxState: State = defaultState, action: Actions): State => {
   switch (action.type) {
     case "SUBMIT_FRUIT":
-      return {
-        state: "fruit_loading",
-        widget: action.widget
-      };
+      switch (reduxState.state) {
+        case "initial":
+          return {
+            state: "fruit_loading",
+            widget: action.widget
+          };
+        default:
+          throw new Error("Inavlid transition");
+      }
     case "SUBMIT_FRUIT_ERROR":
-      return {
-        state: "fruit_error",
-        error: action.error
-      };
-    case "SUBMIT_FRUIT_OK":
-      switch (store.state) {
+      switch (reduxState.state) {
         case "fruit_loading":
-          const { state, ...rest } = store;
+          return {
+            state: "fruit_error",
+            error: action.error
+          };
+        default:
+          throw new Error("Inavlid transition");
+      }
+    case "SUBMIT_FRUIT_OK":
+      switch (reduxState.state) {
+        case "fruit_loading":
+          const { state, ...rest } = reduxState;
           return {
             ...rest,
             state: "fruit_ok",
@@ -46,6 +56,7 @@ export default (store: State = defaultState, action: Actions): State => {
           throw new Error("Inavlid transition");
       }
     default:
-      return exhaustiveCheck(action.type);
+      exhaustiveCheck(action.type);
+      return reduxState;
   }
 };

@@ -3,8 +3,7 @@ import React, { Component } from "react";
 import { connect } from "react-redux";
 import StepOneForm from "./StepOneForm";
 import type { FruitWidget } from "src/types";
-import { type State } from "src/redux/state";
-import { type Dispatch } from "src/redux/reducers";
+import { type State, type Dispatch } from "src/redux";
 
 type Props = {
   submit: (widget: FruitWidget) => void

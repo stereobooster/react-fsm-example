@@ -1,4 +1,4 @@
 // @flow
 export const exhaustiveCheck = (value: empty) => {
-  throw new Error(`Unhandled value: ${value}`)
+  // throw new Error(`Unhandled value: ${value}`)
 }
