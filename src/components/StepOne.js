@@ -4,7 +4,7 @@ import { connect } from "react-redux";
 import StepOneForm from "./StepOneForm";
 import StepOneResult from "./StepOneResult";
 import type { FruitForm } from "src/types";
-import { type Dispatch, type State, fruitSubmitSideEffect } from "src/redux";
+import { type Dispatch, type State } from "src/redux";
 
 type Props = {
   state: State,
@@ -21,9 +21,6 @@ const StepOne = ({ submit, state }: Props) => (
 export default connect(
   (state: State) => ({ state }),
   (dispatch: Dispatch) => ({
-    submit: (form: FruitForm) => {
-      dispatch({ type: "SUBMIT_FRUIT", form });
-      fruitSubmitSideEffect(dispatch, form);
-    }
+    submit: (form: FruitForm) => dispatch({ type: "SUBMIT_FRUIT", form })
   })
 )(StepOne);

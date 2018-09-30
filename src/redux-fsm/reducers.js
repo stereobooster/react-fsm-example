@@ -1,5 +1,6 @@
 //  @flow
 import { type Dispatch as DispatchT } from "redux";
+import { loop, Cmd, type Loop } from "redux-loop";
 import { exhaustiveCheck } from "src/utils";
 import { type State, defaultState } from "./state";
 import type { FruitForm, FruitResponse } from "src/types";
@@ -21,34 +22,33 @@ type FruitOk = {
 export type Actions = FruitSubmit | FruitError | FruitOk;
 export type Dispatch = DispatchT<Actions>;
 
-export const fruitSubmitSideEffect = (dispatch: Dispatch, form: FruitForm) => {
-  fruitRequest(form).then(
-    resonse => {
-      dispatch({
-        type: "SUBMIT_FRUIT_OK",
-        resonse
-      });
-    },
-    error => {
-      dispatch({
-        type: "SUBMIT_FRUIT_ERROR",
-        error
-      });
-    }
-  );
-};
-
-export default (reduxState: State = defaultState, action: Actions): State => {
+export default (
+  reduxState: State = defaultState,
+  action: Actions
+): Loop<State, Actions> | State => {
   switch (action.type) {
     case "SUBMIT_FRUIT":
       switch (reduxState.state) {
         case "initial":
         case "fruit_error":
         case "fruit_ok":
-          return {
-            state: "fruit_loading",
-            form: action.form
-          };
+          return loop(
+            {
+              state: "fruit_loading",
+              form: action.form
+            },
+            Cmd.run(fruitRequest, {
+              successActionCreator: resonse => ({
+                type: "SUBMIT_FRUIT_OK",
+                resonse
+              }),
+              failActionCreator: error => ({
+                type: "SUBMIT_FRUIT_ERROR",
+                error
+              }),
+              args: [action.form]
+            })
+          );
         case "fruit_loading":
           // we don't allow more than one side effect same time
           return reduxState;
