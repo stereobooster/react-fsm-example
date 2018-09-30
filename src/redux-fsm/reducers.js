@@ -51,7 +51,7 @@ export default (
           );
         case "fruit_loading":
           // we don't allow more than one side effect same time
-          return reduxState;
+          return loop(reduxState, Cmd.none);
         default:
           // exhaustive check doesn't work here, because "initial", "fruit_error"
           // and "fruit_ok" are crumpled together
