@@ -4,7 +4,8 @@ jest.mock("src/api/fruitRequest", () => ({
 // require instead of import because of mock on top
 const reducer = require("./reducers").default;
 
-describe("reducer", () => {
+describe("testing reducer without need to touch side effects", () => {
+  // sanity check
   it("unknown action", () => {
     expect(reducer({ test: 123 }, { type: "other" })).toEqual({ test: 123 });
   });
@@ -12,6 +13,7 @@ describe("reducer", () => {
     expect(reducer(undefined, { type: "other" })).toEqual({ state: "initial" });
   });
 
+  // actual tests
   describe("SUBMIT_FRUIT", () => {
     it("changes state to loading and creates side effect", () => {
       const [state, effect] = reducer(undefined, {
@@ -39,9 +41,37 @@ describe("reducer", () => {
       );
       expect(state).toEqual({ form: "form", state: "fruit_loading" });
     });
+  });
 
+  it("SUBMIT_FRUIT_ERROR", () => {
+    const state = reducer(
+      { form: "form", state: "fruit_loading" },
+      { type: "SUBMIT_FRUIT_ERROR", error: "error" }
+    );
+    expect(state).toEqual({
+      form: "form",
+      error: "error",
+      state: "fruit_error"
+    });
+  });
+
+  it("SUBMIT_FRUIT_OK", () => {
+    const state = reducer(
+      { form: "form", state: "fruit_loading" },
+      { type: "SUBMIT_FRUIT_OK", resonse: "resonse" }
+    );
+    expect(state).toEqual({
+      form: "form",
+      resonse: "resonse",
+      state: "fruit_ok"
+    });
+  });
+});
+
+describe("testing reducer with side effects", () => {
+  describe("SUBMIT_FRUIT", () => {
     // with mocked module
-    it("creates side effect with fruitRequest", () => {
+    it("checks that side effect calls fruitRequest", () => {
       const {fruitRequest} = require("src/api/fruitRequest");
       const [state, effect] = reducer(undefined, {
         type: "SUBMIT_FRUIT",
@@ -51,8 +81,8 @@ describe("reducer", () => {
       expect(fruitRequest).toBeCalledWith({ test: 123 });
     });
 
-    // with mocked fetch
-    // describe("actually run side effects", () => {
+    // with mocked fetch, this test is more appropriate for src/api/fruitRequest
+    // describe("checks that side effect calls fetch", () => {
     //   let fetch;
     //   beforeEach(() => {
     //     fetch = global.fetch;
@@ -79,29 +109,5 @@ describe("reducer", () => {
     //     ]);
     //   });
     // });
-  });
-
-  it("SUBMIT_FRUIT_ERROR", () => {
-    const state = reducer(
-      { form: "form", state: "fruit_loading" },
-      { type: "SUBMIT_FRUIT_ERROR", error: "error" }
-    );
-    expect(state).toEqual({
-      form: "form",
-      error: "error",
-      state: "fruit_error"
-    });
-  });
-
-  it("SUBMIT_FRUIT_OK", () => {
-    const state = reducer(
-      { form: "form", state: "fruit_loading" },
-      { type: "SUBMIT_FRUIT_OK", resonse: "resonse" }
-    );
-    expect(state).toEqual({
-      form: "form",
-      resonse: "resonse",
-      state: "fruit_ok"
-    });
   });
 });
