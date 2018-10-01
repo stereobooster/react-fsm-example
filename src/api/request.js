@@ -34,3 +34,9 @@ export default (url: string, options: RequestOptions = {}) => {
     timeout
   );
 };
+
+export const pause = (timeout: number) =>
+  new Promise<void>(resolve => setTimeout(resolve, timeout));
+
+export const randomlyFail = (chance: number = 0.05) =>
+  Math.random() > chance ? Promise.resolve() : Promise.reject();
