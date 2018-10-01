@@ -2,7 +2,6 @@
 import React from "react";
 import { connect } from "react-redux";
 import StepOneForm from "./StepOneForm";
-import StepOneResult from "./StepOneResult";
 import type { FruitForm } from "src/types";
 import { type Dispatch, type State } from "src/redux";
 
@@ -13,8 +12,11 @@ type Props = {
 
 const StepOne = ({ submit, state }: Props) => (
   <React.Fragment>
-    <StepOneForm submit={submit} stateState={state.state} />
-    <StepOneResult state={state} />
+    <StepOneForm
+      submit={submit}
+      stateState={state.state}
+      form={state.form ? state.form : undefined}
+    />
   </React.Fragment>
 );
 

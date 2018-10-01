@@ -1,6 +1,10 @@
 jest.mock("src/api/fruitRequest", () => ({
   fruitRequest: jest.fn(() => "mockedFruitRequest")
 }));
+jest.mock("src/history", () => ({
+  push: jest.fn(() => {}),
+  replace: jest.fn(() => {})
+}));
 // require instead of import because of mock on top
 const reducer = require("./reducers").default;
 
@@ -29,6 +33,7 @@ describe("testing reducer without need to touch side effects", () => {
         error: "error",
         type: "SUBMIT_FRUIT_ERROR"
       });
+      expect(effect.args).toEqual(["form"]);
     });
 
     it("ignores if there is effect already running", () => {
@@ -40,11 +45,12 @@ describe("testing reducer without need to touch side effects", () => {
         }
       );
       expect(state).toEqual({ form: "form", state: "fruit_loading" });
+      expect(effect.type).toEqual("NONE");
     });
   });
 
   it("SUBMIT_FRUIT_ERROR", () => {
-    const state = reducer(
+    const [state, effect] = reducer(
       { form: "form", state: "fruit_loading" },
       { type: "SUBMIT_FRUIT_ERROR", error: "error" }
     );
@@ -53,10 +59,11 @@ describe("testing reducer without need to touch side effects", () => {
       error: "error",
       state: "fruit_error"
     });
+    expect(effect.type).toEqual("NONE");
   });
 
   it("SUBMIT_FRUIT_OK", () => {
-    const state = reducer(
+    const [state, effect] = reducer(
       { form: "form", state: "fruit_loading" },
       { type: "SUBMIT_FRUIT_OK", resonse: "resonse" }
     );
@@ -65,6 +72,8 @@ describe("testing reducer without need to touch side effects", () => {
       resonse: "resonse",
       state: "fruit_ok"
     });
+    expect(effect.simulate({ success: true })).toEqual(null);
+    expect(effect.args).toEqual(["/step-2"]);
   });
 });
 
@@ -72,13 +81,23 @@ describe("testing reducer with side effects", () => {
   describe("SUBMIT_FRUIT", () => {
     // with mocked module
     it("checks that side effect calls fruitRequest", () => {
-      const {fruitRequest} = require("src/api/fruitRequest");
+      const { fruitRequest } = require("src/api/fruitRequest");
       const [state, effect] = reducer(undefined, {
         type: "SUBMIT_FRUIT",
         form: { test: 123 }
       });
       expect(effect.func(...effect.args)).toEqual("mockedFruitRequest");
       expect(fruitRequest).toBeCalledWith({ test: 123 });
+    });
+
+    it("SUBMIT_FRUIT_OK", () => {
+      const { push } = require("src/history");
+      const [state, effect] = reducer(
+        { form: "form", state: "fruit_loading" },
+        { type: "SUBMIT_FRUIT_OK", resonse: "resonse" }
+      );
+      expect(effect.func(...effect.args)).toEqual();
+      expect(push).toBeCalledWith("/step-2")
     });
 
     // with mocked fetch, this test is more appropriate for src/api/fruitRequest

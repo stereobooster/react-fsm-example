@@ -2,6 +2,8 @@
 import React, { Component } from "react";
 import type { FruitForm } from "src/types";
 import { type StateState } from "src/redux";
+import format from "date-fns/format";
+import parse from "date-fns/parse";
 
 // General type to describe form
 type ToString = () => string;
@@ -38,7 +40,7 @@ const validate = (values: Values): [Errors, FruitForm | void] => {
   } else {
     res.name = values.name;
   }
-  const startDate = new Date(values.start);
+  const startDate = parse(values.start);
   if (isValidDate(startDate)) {
     startDate.setHours(0, 0, 0, 0);
     if (startDate.getTime() < today().getTime()) {
@@ -60,18 +62,26 @@ const validate = (values: Values): [Errors, FruitForm | void] => {
 
 type Props = {
   submit: FruitForm => void,
-  stateState: StateState
+  stateState: StateState,
+  form: void | FruitForm
 };
 
 class StepOne extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
+    // this code cries for io-ts
+    const values = props.form
+      ? {
+          name: props.form.name,
+          start: format(props.form.start, "YYYY-MM-DD")
+        }
+      : {
+          // defaults for simplicity
+          name: "apple",
+          start: format(new Date(), "YYYY-MM-DD")
+        };
     this.state = {
-      values: {
-        // defaults for simplicity
-        name: "apple",
-        start: new Date().toISOString().split("T")[0]
-      },
+      values,
       errors: {},
       touched: {},
       isSubmitting: false
