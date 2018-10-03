@@ -1,7 +1,7 @@
 // @flow
 import is, { type AssertionType } from "sarcastic";
 import type { FruitForm } from "src/types";
-import request, { pause, randomlyFail } from "./request";
+import request from "./request";
 
 const fruitResponseShape = is.arrayOf(
   is.shape({
@@ -13,13 +13,22 @@ const fruitResponseShape = is.arrayOf(
 
 export type FruitResponse = AssertionType<typeof fruitResponseShape>;
 
-export const fruitRequest = async (form: FruitForm): Promise<FruitResponse> => {
-  // intentional pause to simulate slow network
-  await pause(2000);
-  await randomlyFail();
-  const response = await request(
-    `/fruits.json?name=${form.name}&start=${form.start.toISOString()}`
+const baseFruitRequest = (form: FruitForm) => {
+  const endpoint =
+    process.env.NODE_ENV === "development" ? "/fruits" : "/fruits.json";
+  return request(
+    `${endpoint}?name=${form.name}&start=${form.start.toISOString()}`
   );
+};
+
+export const prefetch = async (form: FruitForm): Promise<void> => {
+  try {
+    await baseFruitRequest(form);
+  } catch (e) {}
+};
+
+export const fruitRequest = async (form: FruitForm): Promise<FruitResponse> => {
+  const response = await baseFruitRequest(form);
   if (!response.ok) throw new Error("Non 200 response");
   return is(await response.json(), fruitResponseShape);
 };

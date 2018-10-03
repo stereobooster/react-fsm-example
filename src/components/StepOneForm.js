@@ -62,6 +62,7 @@ const validate = (values: Values): [Errors, FruitForm | void] => {
 
 type Props = {
   submit: FruitForm => void,
+  prefetch: FruitForm => void,
   stateState: StateState,
   form: void | FruitForm
 };
@@ -76,9 +77,8 @@ class StepOne extends Component<Props, State> {
           start: format(props.form.start, "YYYY-MM-DD")
         }
       : {
-          // defaults for simplicity
-          name: "apple",
-          start: format(new Date(), "YYYY-MM-DD")
+          name: "", // "apple",
+          start: "" // format(new Date(), "YYYY-MM-DD")
         };
     this.state = {
       values,
@@ -89,10 +89,10 @@ class StepOne extends Component<Props, State> {
   }
   handleSubmit = (e: SyntheticEvent<HTMLInputElement>) => {
     e.preventDefault();
-    const [errors, values] = validate(this.state.values);
-    if (values) {
+    const [errors, form] = validate(this.state.values);
+    if (form) {
       this.setState({ isSubmitting: true });
-      this.props.submit && this.props.submit(values);
+      this.props.submit(form);
     } else {
       this.setState({
         errors,
@@ -106,12 +106,11 @@ class StepOne extends Component<Props, State> {
   handleChange = (e: SyntheticEvent<HTMLInputElement>) => {
     // $FlowFixMe
     const { name, value } = e.target;
-    this.setState({
-      values: {
-        ...this.state.values,
-        [name]: value
-      }
-    });
+    const values = {
+      ...this.state.values,
+      [name]: value
+    };
+    this.setState({ values });
   };
   handleBlur = (e: SyntheticEvent<HTMLInputElement>) => {
     // $FlowFixMe
@@ -122,8 +121,16 @@ class StepOne extends Component<Props, State> {
         ...this.state.touched,
         [name]: true
       },
-      errors: errors
+      errors
     });
+  };
+  validateAndPrefetch = (values: Values) => {
+    const [errors, form] = validate(values);
+    if (form) this.props.prefetch(form);
+    return [errors, form];
+  };
+  prefetch = () => {
+    this.validateAndPrefetch(this.state.values);
   };
   render() {
     const { values, errors, touched } = this.state;
@@ -151,12 +158,14 @@ class StepOne extends Component<Props, State> {
             />
             {errors.start && touched.start && errors.start}
           </div>
-          <button
-            type="submit"
-            disabled={this.props.stateState === "fruit_loading"}
-          >
-            Search
-          </button>
+          <div className="buttonArea" onMouseEnter={this.prefetch}>
+            <button
+              type="submit"
+              disabled={this.props.stateState === "fruit_loading"}
+            >
+              Search
+            </button>
+          </div>
         </form>
       </div>
     );
