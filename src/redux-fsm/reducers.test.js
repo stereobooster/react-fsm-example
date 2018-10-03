@@ -2,6 +2,7 @@ jest.mock("src/api/fruitRequest", () => ({
   fruitRequest: jest.fn(() => "mockedFruitRequest")
 }));
 jest.mock("src/history", () => ({
+  location: { pathname: "/" },
   push: jest.fn(() => {}),
   replace: jest.fn(() => {})
 }));
@@ -25,15 +26,24 @@ describe("testing reducer without need to touch side effects", () => {
         form: "form"
       });
       expect(state).toEqual({ form: "form", state: "fruit_loading" });
-      expect(effect.simulate({ success: true, result: "response" })).toEqual({
-        resonse: "response",
-        type: "SUBMIT_FRUIT_OK"
-      });
-      expect(effect.simulate({ success: false, result: "error" })).toEqual({
-        error: "error",
-        type: "SUBMIT_FRUIT_ERROR"
-      });
-      expect(effect.args).toEqual(["form"]);
+      expect(
+        effect.simulate([{ success: true, result: "response" }, {}])
+      ).toEqual([
+        {
+          resonse: "response",
+          type: "SUBMIT_FRUIT_OK"
+        }
+      ]);
+      expect(
+        effect.simulate([{ success: false, result: "error" }, {}])
+      ).toEqual([
+        {
+          error: "error",
+          type: "SUBMIT_FRUIT_ERROR"
+        }
+      ]);
+      expect(effect.cmds[0].args).toEqual(["form"]);
+      expect(effect.cmds[1].args).toEqual(["/step-2"]);
     });
 
     it("ignores if there is effect already running", () => {
@@ -59,7 +69,9 @@ describe("testing reducer without need to touch side effects", () => {
       error: "error",
       state: "fruit_error"
     });
-    expect(effect.type).toEqual("NONE");
+    expect(effect.type).toEqual("RUN");
+    expect(effect.simulate({ success: true })).toEqual(null);
+    expect(effect.args).toEqual(["/step-2", "/"]);
   });
 
   it("SUBMIT_FRUIT_OK", () => {
@@ -72,32 +84,34 @@ describe("testing reducer without need to touch side effects", () => {
       resonse: "resonse",
       state: "fruit_ok"
     });
-    expect(effect.simulate({ success: true })).toEqual(null);
-    expect(effect.args).toEqual(["/step-2"]);
+    expect(effect.type).toEqual("NONE");
   });
 });
 
 describe("testing reducer with side effects", () => {
   describe("SUBMIT_FRUIT", () => {
-    // with mocked module
+    // with mocked modules
     it("checks that side effect calls fruitRequest", () => {
       const { fruitRequest } = require("src/api/fruitRequest");
-      const [state, effect] = reducer(undefined, {
+      const [state, effects] = reducer(undefined, {
         type: "SUBMIT_FRUIT",
         form: { test: 123 }
       });
-      expect(effect.func(...effect.args)).toEqual("mockedFruitRequest");
+      const apiRequest = effects.cmds[0];
+      expect(apiRequest.func(...apiRequest.args)).toEqual("mockedFruitRequest");
       expect(fruitRequest).toBeCalledWith({ test: 123 });
     });
 
-    it("SUBMIT_FRUIT_OK", () => {
+    it("checks that side effect calls history", () => {
       const { push } = require("src/history");
-      const [state, effect] = reducer(
-        { form: "form", state: "fruit_loading" },
-        { type: "SUBMIT_FRUIT_OK", resonse: "resonse" }
-      );
-      expect(effect.func(...effect.args)).toEqual();
-      expect(push).toBeCalledWith("/step-2")
+      const [state, effects] = reducer(undefined, {
+        type: "SUBMIT_FRUIT",
+        form: { test: 123 }
+      });
+
+      const navigation = effects.cmds[1];
+      expect(navigation.func(...navigation.args)).toEqual();
+      expect(push).toBeCalledWith("/step-2");
     });
 
     // with mocked fetch, this test is more appropriate for src/api/fruitRequest
@@ -128,5 +142,34 @@ describe("testing reducer with side effects", () => {
     //     ]);
     //   });
     // });
+  });
+
+  // with mocked modules
+  describe("SUBMIT_FRUIT_ERROR", () => {
+    it("navigates back", () => {
+      const { replace, location } = require("src/history");
+      replace.mockClear();
+      location.pathname = "/step-2";
+
+      const [state, effect] = reducer(
+        { form: "form", state: "fruit_loading" },
+        { type: "SUBMIT_FRUIT_ERROR", error: "error" }
+      );
+      expect(effect.func(...effect.args)).toEqual();
+      expect(replace).toBeCalledWith("/");
+    });
+
+    it("does nothing if user navigated away", () => {
+      const { replace, location } = require("src/history");
+      replace.mockClear();
+      location.pathname = "/";
+
+      const [state, effect] = reducer(
+        { form: "form", state: "fruit_loading" },
+        { type: "SUBMIT_FRUIT_ERROR", error: "error" }
+      );
+      expect(effect.func(...effect.args)).toEqual();
+      expect(replace).not.toBeCalled();
+    });
   });
 });

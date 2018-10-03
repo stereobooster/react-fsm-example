@@ -1,7 +1,7 @@
 // @flow
 import is, { type AssertionType } from "sarcastic";
 import type { FruitForm } from "src/types";
-import request, { pause } from "./request";
+import request, { pause, randomlyFail } from "./request";
 
 const fruitResponseShape = is.arrayOf(
   is.shape({
@@ -16,6 +16,7 @@ export type FruitResponse = AssertionType<typeof fruitResponseShape>;
 export const fruitRequest = async (form: FruitForm): Promise<FruitResponse> => {
   // intentional pause to simulate slow network
   await pause(2000);
+  await randomlyFail();
   const response = await request(
     `/fruits.json?name=${form.name}&start=${form.start.toISOString()}`
   );

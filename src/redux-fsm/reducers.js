@@ -44,12 +44,15 @@ export default (
             }),
             args: [action.form]
           });
+          const navigateToTheNextPage = Cmd.run(path => history.push(path), {
+            args: ["/step-2"]
+          });
           return loop(
             {
               state: "fruit_loading",
               form: action.form
             },
-            submitForm
+            Cmd.list([submitForm, navigateToTheNextPage])
           );
         case "fruit_loading":
           // we don't allow more than one side effect same time
@@ -64,13 +67,22 @@ export default (
       switch (reduxState.state) {
         case "fruit_loading":
           const { state, ...rest } = reduxState;
+          const navigateToPreviousPage = Cmd.run(
+            (expectedPath, path) => {
+              if (history.location.pathname === expectedPath)
+                history.replace(path);
+            },
+            {
+              args: ["/step-2", "/"]
+            }
+          );
           return loop(
             {
               ...rest,
               state: "fruit_error",
               error: action.error
             },
-            Cmd.none
+            navigateToPreviousPage
           );
         default:
           throw new Error("Impossible");
@@ -79,16 +91,13 @@ export default (
       switch (reduxState.state) {
         case "fruit_loading":
           const { state, ...rest } = reduxState;
-          const navigateToTheNextPage = Cmd.run(path => history.push(path), {
-            args: ["/step-2"]
-          });
           return loop(
             {
               ...rest,
               state: "fruit_ok",
               resonse: action.resonse
             },
-            navigateToTheNextPage
+            Cmd.none
           );
         default:
           throw new Error("Impossible");
