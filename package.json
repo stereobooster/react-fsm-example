@@ -13,7 +13,8 @@
     "react-scripts": "2.0.2",
     "redux": "^4.0.0",
     "redux-loop": "^4.4.1",
-    "sarcastic": "https://github.com/stereobooster/sarcastic#date"
+    "sarcastic": "https://github.com/stereobooster/sarcastic#date",
+    "tmp-cache": "^1.0.0"
   },
   "scripts": {
     "start": "react-scripts start",

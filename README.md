@@ -90,10 +90,7 @@ Run prefetch when users mouse approaches the end of the form. Doesn't work for m
 
 ```js
 <div className="buttonArea" onMouseEnter={this.prefetch}>
-  <button
-    type="submit"
-    disabled={this.props.stateState === "fruit_loading"}
-  >
+  <button type="submit" disabled={this.props.stateState === "fruit_loading"}>
     Search
   </button>
 </div>
@@ -118,6 +115,12 @@ The simplest option is to rely on the browser cache e.g. launch request and "pip
 **Cons**: if requests are slow it can happen that, there will be not enough time for prefetch to get cached before user submit.
 
 ```js
+const baseFruitRequest = (form: FruitForm) => {
+  //...
+  const query = `name=${form.name}&start=${form.start.toISOString()}`;
+  return request(`${endpoint}?${query}`);
+};
+
 export const prefetch = async (form: FruitForm): Promise<void> => {
   try {
     await baseFruitRequest(form);
@@ -137,3 +140,26 @@ What to use for LRU?
 
 - I created a [fork of lru_map](https://github.com/stereobooster/lru_map) with minimalistic functionality (implemented with a doubly linked list and Map)
 - There is even smaller implementation - [tmp-cache](https://github.com/lukeed/tmp-cache) (implemented with array and Map)
+
+```js
+const cache = new Cache<string, Promise<FruitResponse>>({
+  max: 5,
+  maxAge: 60000
+});
+
+export const fruitRequest = (form: FruitForm): Promise<FruitResponse> => {
+  const query = queryToString(form);
+  let result = cache.get(query);
+  if (!result) {
+    result = baseFruitRequest(form);
+    cache.set(query, result);
+  }
+  return result;
+};
+
+export const prefetch = async (form: FruitForm): Promise<void> => {
+  try {
+    await fruitRequest(form);
+  } catch (e) {}
+};
+```

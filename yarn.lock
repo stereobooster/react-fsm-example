@@ -8364,6 +8364,10 @@ timsort@^0.3.0:
   version "0.3.0"
   resolved "https://registry.yarnpkg.com/timsort/-/timsort-0.3.0.tgz#405411a8e7e6339fe64db9a234de11dc31e02bd4"
 
+tmp-cache@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/tmp-cache/-/tmp-cache-1.0.0.tgz#1538e96a0359885868d7889a4c75853ec7eea6df"
+
 tmp@^0.0.33:
   version "0.0.33"
   resolved "https://registry.yarnpkg.com/tmp/-/tmp-0.0.33.tgz#6d34335889768d21b2bcda0aa277ced3b1bfadf9"
