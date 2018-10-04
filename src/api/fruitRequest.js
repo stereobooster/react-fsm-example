@@ -42,6 +42,7 @@ export const fruitRequest = (form: FruitForm): Promise<FruitResponse> => {
 
 export const prefetch = async (form: FruitForm): Promise<void> => {
   try {
+    console.log(Date.now());
     await fruitRequest(form);
   } catch (e) {}
 };

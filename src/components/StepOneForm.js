@@ -31,6 +31,10 @@ const today = () => {
 };
 const isValidDate = date => date instanceof Date && !isNaN(date);
 
+// as of now consider only date input,
+// but also should include select, checkbox and other
+const isDiscrete = (type: string) => type === "date";
+
 // this is ugly code to imitate what io-ts can do
 const validate = (values: Values): [Errors, FruitForm | void] => {
   const errors = {};
@@ -89,6 +93,7 @@ class StepOne extends Component<Props, State> {
   }
   handleSubmit = (e: SyntheticEvent<HTMLInputElement>) => {
     e.preventDefault();
+    console.log(Date.now());
     const [errors, form] = validate(this.state.values);
     if (form) {
       this.setState({ isSubmitting: true });
@@ -105,17 +110,18 @@ class StepOne extends Component<Props, State> {
   };
   handleChange = (e: SyntheticEvent<HTMLInputElement>) => {
     // $FlowFixMe
-    const { name, value } = e.target;
+    const { name, value, type } = e.target;
     const values = {
       ...this.state.values,
       [name]: value
     };
     this.setState({ values });
+    if (isDiscrete(type)) this.validateAndPrefetch(values);
   };
   handleBlur = (e: SyntheticEvent<HTMLInputElement>) => {
     // $FlowFixMe
-    const { name } = e.target;
-    const [errors] = validate(this.state.values);
+    const { name, type } = e.target;
+    const [errors, form] = validate(this.state.values);
     this.setState({
       touched: {
         ...this.state.touched,
@@ -123,14 +129,12 @@ class StepOne extends Component<Props, State> {
       },
       errors
     });
+    if (!isDiscrete(type)) if (form) this.props.prefetch(form);
   };
   validateAndPrefetch = (values: Values) => {
     const [errors, form] = validate(values);
     if (form) this.props.prefetch(form);
     return [errors, form];
-  };
-  prefetch = () => {
-    this.validateAndPrefetch(this.state.values);
   };
   render() {
     const { values, errors, touched } = this.state;
@@ -158,7 +162,12 @@ class StepOne extends Component<Props, State> {
             />
             {errors.start && touched.start && errors.start}
           </div>
-          <div className="buttonArea" onMouseEnter={this.prefetch}>
+          <div
+            className="buttonArea"
+            onMouseEnter={() => {
+              this.validateAndPrefetch(this.state.values);
+            }}
+          >
             <button
               type="submit"
               disabled={this.props.stateState === "fruit_loading"}

@@ -89,10 +89,12 @@ The question is how to catch time between the moment when the user finishes inpu
 Run prefetch when users mouse approaches the end of the form. Doesn't work for mobile devices.
 
 ```js
-<div className="buttonArea" onMouseEnter={this.prefetch}>
-  <button type="submit" disabled={this.props.stateState === "fruit_loading"}>
-    Search
-  </button>
+<div
+  onMouseEnter={() => {
+    this.validateAndPrefetch(this.state.values);
+  }}
+>
+  <button type="submit">Search</button>
 </div>
 ```
 
@@ -100,9 +102,36 @@ Run prefetch when users mouse approaches the end of the form. Doesn't work for m
 
 Run prefetch on change of each input. This approach is problematic for text fields (inputs and textarea), because it will create a flood of requests, and because the browser can have a limited number of requests simultaneously it can slow down final performance. It may work for discrete inputs though, like selects/combo boxes, checkboxes, calendars and similar.
 
+```js
+handleChange = (e: SyntheticEvent<HTMLInputElement>) => {
+  const { name, value, type } = e.target;
+  const values = {
+    ...this.state.values,
+    [name]: value
+  };
+  this.setState({ values });
+  if (isDiscrete(type)) this.validateAndPrefetch(values);
+};
+```
+
 #### On blur
 
 Run prefetch on blur (unfocus), this can work unless all fields in the form required than there, most likely, will be no pause between blur and form submit.
+
+```js
+handleBlur = (e: SyntheticEvent<HTMLInputElement>) => {
+  const { name, type } = e.target;
+  const [errors] = validate(this.state.values);
+  this.setState({
+    touched: {
+      ...this.state.touched,
+      [name]: true
+    },
+    errors
+  });
+  if (!isDiscrete(type)) this.validateAndPrefetch(values);
+};
+```
 
 ### How to cache results
 
@@ -163,3 +192,18 @@ export const prefetch = async (form: FruitForm): Promise<void> => {
   } catch (e) {}
 };
 ```
+
+### More thoughts on prefetch
+
+From my personal experimentation, I found that prefetch can win anywhere from 300ms to seconds.
+
+But this comes with a cost - we broke encapsulation. Connector-component was only responsible for dispatching actions and logic was encapsulated in Redux, but now it (logic) is also exposed to the connector.
+
+## When to use it
+
+> With Great Power Comes Great Responsibility
+
+|          | Optimistic UI | Prefetch |
+|----------|---------------|----------|
+| GET-ish  | Yes           | Yes      |
+| POST-ish | Maybe         | No       |
