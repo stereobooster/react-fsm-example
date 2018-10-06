@@ -707,6 +707,10 @@
   version "1.4.0"
   resolved "https://registry.yarnpkg.com/@csstools/convert-colors/-/convert-colors-1.4.0.tgz#ad495dc41b12e75d588c6db8b9834f08fa131eb7"
 
+"@stereobooster/unfetch@^4.1.0":
+  version "4.1.0"
+  resolved "https://registry.yarnpkg.com/@stereobooster/unfetch/-/unfetch-4.1.0.tgz#69aa7dfd76f7d6697ce3b4a01341ce5a8f73b7b2"
+
 "@svgr/core@^2.4.1":
   version "2.4.1"
   resolved "https://registry.yarnpkg.com/@svgr/core/-/core-2.4.1.tgz#03a407c28c4a1d84305ae95021e8eabfda8fa731"
