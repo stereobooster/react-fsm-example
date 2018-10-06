@@ -27,7 +27,7 @@ The issue here is that after user press button, the application waits for a resp
 
 ## Optimistic UI
 
-One way to solve this problem is, instead of waiting, proceed as if you actually have response, transition to the next page, start to draw page (header, maybe breadcrumbs etc), and as soon as we get to actual content draw a spinner\*, if request is pending or the content itself.
+One way to solve this problem is, instead of waiting, proceed as if we actually have response, transition to the next page, start to draw page (header, maybe breadcrumbs etc), and as soon as we get to actual content draw a spinner\*, if request is pending or the content itself.
 
 \* - with 200ms delay, we will give some more time ("unnoticeable" for the user) for the request before we will admit it takes too long. Not sure where I get 200ms initially, [another opinion it should 100ms](https://www.nngroup.com/articles/response-times-3-important-limits/).
 
@@ -197,7 +197,15 @@ export const prefetch = async (form: FruitForm): Promise<void> => {
 
 From my personal experimentation, I found that prefetch can win anywhere from 300ms to seconds.
 
-But this comes with a cost - we broke encapsulation. Connector-component was only responsible for dispatching actions and logic was encapsulated in Redux, but now it (logic) is also exposed to the connector.
+But the win comes with a cost - we broke encapsulation. Connector-component was only responsible for dispatching actions and logic was encapsulated in Redux, but now logic is also exposed to the connector.
+
+### CORS
+
+We try to win milliseconds with prefetch "cheat", but the same time if the request is doing preflight CORS check it can add seconds of pause to the final experience (depends on the network). It is a good idea to optimize this thing first before you jump into prefetch solution.
+
+Remove CORS if an endpoint is public and doesn't require authentication e.g. everybody can read it anyway and it is not user specific. CORS is not securing anything in this case. If you use `fetch` remove all custom headers and use classic GET/POST, otherwise the browser will trigger CORS preflight check.
+
+If you use CORS, make sure it can be cached by the browser ([Access-Control-Max-Age](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Max-Age)).
 
 ## When to use it
 
@@ -207,3 +215,21 @@ But this comes with a cost - we broke encapsulation. Connector-component was onl
 |----------|---------------|----------|
 | GET-ish  | Yes           | Yes      |
 | POST-ish | Maybe         | No       |
+
+### GET-ish
+
+GET-ish - a request that doesn't have a side effect on the server, only reads data. Typically this is GET request (but not limited to).
+
+**Optimistic** UI can be applied if we make sure that we lower rate of the errors on the client side e.g. we validate user input on the client side, before sending it, so the rate of server error response will go down.
+
+### POST-ish
+
+POST-ish - request that has a side effect on the server, like write to the database or similar. Typically this is a POST, PUT or DELETE.
+
+**Optimistic** UI can be applied if we make sure that we lower rate of the errors on the client side e.g. we validate user input on the client side, before sending it, so the rate of server error response will go down.
+
+There can be specific cases which prevent to use Optimistic UI like Braintree hosted fields, which we do not control and can't repopulate in case of error when we navigate back and show the form again.
+
+**Prefetch** we can't send "write" requests to the server without users explicit consent.
+
+For example, we can't submit registration form before the user clicks "sign up", but the same time we can validate all fields (including email, phone, password) upfront and use Optimistic UI

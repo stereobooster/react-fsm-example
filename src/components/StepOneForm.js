@@ -93,7 +93,6 @@ class StepOne extends Component<Props, State> {
   }
   handleSubmit = (e: SyntheticEvent<HTMLInputElement>) => {
     e.preventDefault();
-    console.log(Date.now());
     const [errors, form] = validate(this.state.values);
     if (form) {
       this.setState({ isSubmitting: true });
