@@ -31,17 +31,18 @@ const cache = new Cache<string, Promise<FruitResponse>>({
 });
 
 export const fruitRequest = (form: FruitForm): Promise<FruitResponse> => {
-  const query = queryToString(form);
-  let result = cache.get(query);
-  if (!result) {
-    result = baseFruitRequest(form);
-    cache.set(query, result);
-  }
-  return result;
+  // const query = queryToString(form);
+  // let result = cache.get(query);
+  // if (!result) {
+  //   result = baseFruitRequest(form);
+  //   cache.set(query, result);
+  // }
+  // return result;
+  return baseFruitRequest(form);
 };
 
 export const prefetch = async (form: FruitForm): Promise<void> => {
-  try {
-    await fruitRequest(form);
-  } catch (e) {}
+  // try {
+  //   await fruitRequest(form);
+  // } catch (e) {}
 };
