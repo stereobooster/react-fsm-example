@@ -167,12 +167,7 @@ class StepOne extends Component<Props, State> {
               this.validateAndPrefetch(this.state.values);
             }}
           >
-            <button
-              type="submit"
-              disabled={this.props.stateState === "fruit_loading"}
-            >
-              Search
-            </button>
+            <button type="submit">Search</button>
           </div>
         </form>
       </div>

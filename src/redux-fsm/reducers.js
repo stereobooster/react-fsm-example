@@ -6,6 +6,7 @@ import { type State, defaultState } from "./state";
 import type { FruitForm, FruitResponse } from "src/types";
 import { fruitRequest } from "src/api/fruitRequest";
 import history from "src/history";
+import deepEqual from "fast-deep-equal";
 
 type FruitSubmit = {
   type: "SUBMIT_FRUIT",
@@ -13,11 +14,13 @@ type FruitSubmit = {
 };
 type FruitError = {
   type: "SUBMIT_FRUIT_ERROR",
-  error: mixed
+  error: mixed,
+  form: FruitForm
 };
 type FruitOk = {
   type: "SUBMIT_FRUIT_OK",
-  resonse: FruitResponse
+  resonse: FruitResponse,
+  form: FruitForm
 };
 
 export type Actions = FruitSubmit | FruitError | FruitOk;
@@ -33,16 +36,20 @@ export default (
         case "initial":
         case "fruit_error":
         case "fruit_ok":
+        case "fruit_loading":
+          const { form } = action;
           const submitForm = Cmd.run(fruitRequest, {
             successActionCreator: resonse => ({
               type: "SUBMIT_FRUIT_OK",
-              resonse
+              resonse,
+              form
             }),
             failActionCreator: error => ({
               type: "SUBMIT_FRUIT_ERROR",
-              error
+              error,
+              form
             }),
-            args: [action.form]
+            args: [form]
           });
           const navigateToTheNextPage = Cmd.run(path => history.push(path), {
             args: ["/step-2"]
@@ -50,13 +57,10 @@ export default (
           return loop(
             {
               state: "fruit_loading",
-              form: action.form
+              form
             },
             Cmd.list([submitForm, navigateToTheNextPage])
           );
-        case "fruit_loading":
-          // we don't allow more than one side effect same time
-          return loop(reduxState, Cmd.none);
         default:
           // exhaustive check doesn't work here, because "initial", "fruit_error"
           // and "fruit_ok" are crumpled together
@@ -64,6 +68,9 @@ export default (
           return reduxState;
       }
     case "SUBMIT_FRUIT_ERROR":
+      // $FlowFixMe - guard against race condition
+      if (!deepEqual(reduxState.form, action.form))
+        return loop(reduxState, Cmd.none);
       switch (reduxState.state) {
         case "fruit_loading":
           const { state, ...rest } = reduxState;
@@ -88,6 +95,9 @@ export default (
           throw new Error("Impossible");
       }
     case "SUBMIT_FRUIT_OK":
+      // $FlowFixMe - guard against race condition
+      if (!deepEqual(reduxState.form, action.form))
+        return loop(reduxState, Cmd.none);
       switch (reduxState.state) {
         case "fruit_loading":
           const { state, ...rest } = reduxState;

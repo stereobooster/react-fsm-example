@@ -31,7 +31,8 @@ describe("testing reducer without need to touch side effects", () => {
       ).toEqual([
         {
           resonse: "response",
-          type: "SUBMIT_FRUIT_OK"
+          type: "SUBMIT_FRUIT_OK",
+          form: "form"
         }
       ]);
       expect(
@@ -39,14 +40,15 @@ describe("testing reducer without need to touch side effects", () => {
       ).toEqual([
         {
           error: "error",
-          type: "SUBMIT_FRUIT_ERROR"
+          type: "SUBMIT_FRUIT_ERROR",
+          form: "form"
         }
       ]);
       expect(effect.cmds[0].args).toEqual(["form"]);
       expect(effect.cmds[1].args).toEqual(["/step-2"]);
     });
 
-    it("ignores if there is effect already running", () => {
+    it("updates form data of the current state, if there is effect already running", () => {
       const [state, effect] = reducer(
         { form: "form", state: "fruit_loading" },
         {
@@ -54,37 +56,59 @@ describe("testing reducer without need to touch side effects", () => {
           form: "second form"
         }
       );
-      expect(state).toEqual({ form: "form", state: "fruit_loading" });
+      expect(state).toEqual({ form: "second form", state: "fruit_loading" });
+      expect(effect.type).toEqual("LIST");
+      expect(effect.cmds[0].args).toEqual(["second form"]);
+      expect(effect.cmds[1].args).toEqual(["/step-2"]);
+    });
+  });
+
+  describe("SUBMIT_FRUIT_ERROR", () => {
+    it("updates state and creates side effect", () => {
+      const [state, effect] = reducer(
+        { form: "form", state: "fruit_loading" },
+        { type: "SUBMIT_FRUIT_ERROR", error: "error", form: "form" }
+      );
+      expect(state).toEqual({
+        form: "form",
+        error: "error",
+        state: "fruit_error"
+      });
+      expect(effect.type).toEqual("RUN");
+      expect(effect.simulate({ success: true })).toEqual(null);
+      expect(effect.args).toEqual(["/step-2", "/"]);
+    });
+
+    it("does nothing in case of race condition", () => {
+      const [state, effect] = reducer(
+        { form: "second form", state: "fruit_loading" },
+        { type: "SUBMIT_FRUIT_ERROR", error: "error", form: "form" }
+      );
       expect(effect.type).toEqual("NONE");
     });
   });
 
-  it("SUBMIT_FRUIT_ERROR", () => {
-    const [state, effect] = reducer(
-      { form: "form", state: "fruit_loading" },
-      { type: "SUBMIT_FRUIT_ERROR", error: "error" }
-    );
-    expect(state).toEqual({
-      form: "form",
-      error: "error",
-      state: "fruit_error"
+  describe("SUBMIT_FRUIT_OK", () => {
+    it("updates state and creates side effect", () => {
+      const [state, effect] = reducer(
+        { form: "form", state: "fruit_loading" },
+        { type: "SUBMIT_FRUIT_OK", resonse: "resonse", form: "form" }
+      );
+      expect(state).toEqual({
+        form: "form",
+        resonse: "resonse",
+        state: "fruit_ok"
+      });
+      expect(effect.type).toEqual("NONE");
     });
-    expect(effect.type).toEqual("RUN");
-    expect(effect.simulate({ success: true })).toEqual(null);
-    expect(effect.args).toEqual(["/step-2", "/"]);
-  });
 
-  it("SUBMIT_FRUIT_OK", () => {
-    const [state, effect] = reducer(
-      { form: "form", state: "fruit_loading" },
-      { type: "SUBMIT_FRUIT_OK", resonse: "resonse" }
-    );
-    expect(state).toEqual({
-      form: "form",
-      resonse: "resonse",
-      state: "fruit_ok"
+    it("does nothing in case of race condition", () => {
+      const [state, effect] = reducer(
+        { form: "second form", state: "fruit_loading" },
+        { type: "SUBMIT_FRUIT_OK", resonse: "resonse", form: "form" }
+      );
+      expect(effect.type).toEqual("NONE");
     });
-    expect(effect.type).toEqual("NONE");
   });
 });
 
@@ -146,27 +170,27 @@ describe("testing reducer with side effects", () => {
 
   // with mocked modules
   describe("SUBMIT_FRUIT_ERROR", () => {
-    it("navigates back", () => {
-      const { replace, location } = require("src/history");
+    const { replace, location } = require("src/history");
+    beforeEach(() => {
       replace.mockClear();
+      location.pathname = "/";
+    });
+
+    it("navigates back", () => {
       location.pathname = "/step-2";
 
       const [state, effect] = reducer(
         { form: "form", state: "fruit_loading" },
-        { type: "SUBMIT_FRUIT_ERROR", error: "error" }
+        { type: "SUBMIT_FRUIT_ERROR", error: "error", form: "form" }
       );
       expect(effect.func(...effect.args)).toEqual();
       expect(replace).toBeCalledWith("/");
     });
 
     it("does nothing if user navigated away", () => {
-      const { replace, location } = require("src/history");
-      replace.mockClear();
-      location.pathname = "/";
-
       const [state, effect] = reducer(
         { form: "form", state: "fruit_loading" },
-        { type: "SUBMIT_FRUIT_ERROR", error: "error" }
+        { type: "SUBMIT_FRUIT_ERROR", error: "error", form: "form" }
       );
       expect(effect.func(...effect.args)).toEqual();
       expect(replace).not.toBeCalled();
