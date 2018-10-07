@@ -34,7 +34,10 @@ export const fruitRequest = (form: FruitForm): Promise<FruitResponse> => {
   const query = queryToString(form);
   let result = cache.get(query);
   if (!result) {
-    result = baseFruitRequest(form);
+    result = baseFruitRequest(form).catch(e => {
+      cache.delete(query);
+      return Promise.reject(e);
+    });
     cache.set(query, result);
   }
   return result;
