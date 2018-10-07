@@ -4,7 +4,7 @@ import { loop, Cmd, type Loop } from "redux-loop";
 import { exhaustiveCheck } from "src/utils";
 import { type State, defaultState } from "./state";
 import type { FruitForm, FruitResponse } from "src/types";
-import { fruitRequest } from "src/api/fruitRequest";
+import { fruitRequestCreator } from "src/api/fruitRequest";
 import history from "src/history";
 import deepEqual from "fast-deep-equal";
 
@@ -30,8 +30,7 @@ export default (
 ): Loop<State, Actions> | State => {
   switch (action.type) {
     case "SUBMIT_FRUIT":
-      // $FlowFixMe - flow have no types for AbortController and co
-      const controller = new AbortController();
+      const [controller, fruitRequest] = fruitRequestCreator(action.form);
       const submitForm = Cmd.run(fruitRequest, {
         successActionCreator: resonse => ({
           type: "SUBMIT_FRUIT_OK",
@@ -41,7 +40,7 @@ export default (
           type: "SUBMIT_FRUIT_ERROR",
           error
         }),
-        args: [action.form, controller.signal]
+        args: [] //[action.form]
       });
       const navigateToTheNextPage = Cmd.run(path => history.push(path), {
         args: ["/step-2"]
