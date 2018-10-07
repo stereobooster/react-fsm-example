@@ -5,6 +5,7 @@
   "dependencies": {
     "@stereobooster/unfetch": "^4.1.0",
     "date-fns": "^1.29.0",
+    "fast-deep-equal": "^2.0.1",
     "history": "^4.7.2",
     "normalize.css": "^8.0.0",
     "react": "^16.5.2",

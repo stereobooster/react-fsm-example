@@ -4,8 +4,9 @@ import { loop, Cmd, type Loop } from "redux-loop";
 import { exhaustiveCheck } from "src/utils";
 import { type State, defaultState } from "./state";
 import type { FruitForm, FruitResponse } from "src/types";
-import { fruitRequest } from "src/api/fruitRequest";
+import { fruitRequestCreator } from "src/api/fruitRequest";
 import history from "src/history";
+import deepEqual from "fast-deep-equal";
 
 type FruitSubmit = {
   type: "SUBMIT_FRUIT",
@@ -29,34 +30,61 @@ export default (
 ): Loop<State, Actions> | State => {
   switch (action.type) {
     case "SUBMIT_FRUIT":
+      const [controller, fruitRequest] = fruitRequestCreator(action.form);
+      const submitForm = Cmd.run(fruitRequest, {
+        successActionCreator: resonse => ({
+          type: "SUBMIT_FRUIT_OK",
+          resonse
+        }),
+        failActionCreator: error => ({
+          type: "SUBMIT_FRUIT_ERROR",
+          error
+        }),
+        args: [] //[action.form]
+      });
+      const navigateToTheNextPage = Cmd.run(path => history.push(path), {
+        args: ["/step-2"]
+      });
       switch (reduxState.state) {
         case "initial":
         case "fruit_error":
         case "fruit_ok":
-          const submitForm = Cmd.run(fruitRequest, {
-            successActionCreator: resonse => ({
-              type: "SUBMIT_FRUIT_OK",
-              resonse
-            }),
-            failActionCreator: error => ({
-              type: "SUBMIT_FRUIT_ERROR",
-              error
-            }),
-            args: [action.form]
-          });
-          const navigateToTheNextPage = Cmd.run(path => history.push(path), {
-            args: ["/step-2"]
-          });
           return loop(
             {
               state: "fruit_loading",
-              form: action.form
+              form: action.form,
+              controller
             },
             Cmd.list([submitForm, navigateToTheNextPage])
           );
         case "fruit_loading":
-          // we don't allow more than one side effect same time
-          return loop(reduxState, Cmd.none);
+          if (deepEqual(reduxState.form, action.form)) {
+            // already running
+            return loop(reduxState, Cmd.list([navigateToTheNextPage]));
+          } else {
+            // cancel previous, run new one
+            const cancelPreviousRequest = Cmd.run(
+              controller => {
+                // $FlowFixMe - flow have no types for AbortController and co
+                controller.abort();
+              },
+              {
+                args: [reduxState.controller]
+              }
+            );
+            return loop(
+              {
+                state: "fruit_loading",
+                form: action.form,
+                controller
+              },
+              Cmd.list([
+                cancelPreviousRequest,
+                submitForm,
+                navigateToTheNextPage
+              ])
+            );
+          }
         default:
           // exhaustive check doesn't work here, because "initial", "fruit_error"
           // and "fruit_ok" are crumpled together
@@ -66,7 +94,12 @@ export default (
     case "SUBMIT_FRUIT_ERROR":
       switch (reduxState.state) {
         case "fruit_loading":
-          const { state, ...rest } = reduxState;
+          // $FlowFixMe - flow have no types for AbortController and co
+          if (action.error instanceof DOMException) {
+            // Ignore errors from cancelPreviousRequest
+            return loop(reduxState, Cmd.none);
+          }
+          const { state, controller, ...rest } = reduxState;
           const navigateToPreviousPage = Cmd.run(
             (expectedPath, path) => {
               if (history.location.pathname === expectedPath)
@@ -90,7 +123,7 @@ export default (
     case "SUBMIT_FRUIT_OK":
       switch (reduxState.state) {
         case "fruit_loading":
-          const { state, ...rest } = reduxState;
+          const { state, controller, ...rest } = reduxState;
           return loop(
             {
               ...rest,

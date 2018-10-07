@@ -11,7 +11,8 @@ export type State =
     |}
   | {|
       state: "fruit_loading",
-      form: FruitForm
+      form: FruitForm,
+      controller: mixed
     |}
   | {|
       state: "fruit_error",

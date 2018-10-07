@@ -28,7 +28,7 @@ type RequestOptions = {
 
 // fetch with timeout
 export default (url: string, options: RequestOptions = {}) => {
-  const { timeout = 5000, ...rest } = options;
+  const { timeout = 30000, ...rest } = options;
   return promiseWithTimeout(
     fetch(url, { credentials: "same-origin", ...rest }),
     timeout

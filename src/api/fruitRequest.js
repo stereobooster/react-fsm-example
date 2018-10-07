@@ -17,24 +17,55 @@ export type FruitResponse = AssertionType<typeof fruitResponseShape>;
 const queryToString = (form: FruitForm) =>
   `name=${form.name}&start=${form.start.toISOString()}`;
 
-const baseFruitRequest = async (form: FruitForm) => {
+opaque type AbortControllerSignal = void;
+type AbortControllerT = {
+  signal: AbortControllerSignal,
+  abort: () => void
+};
+
+const once = fn => {
+  let called = false;
+  let result;
+  return () => {
+    if (called) return result;
+    called = true;
+    return (result = fn());
+  };
+};
+
+const baseFruitRequestCreator = (form: FruitForm) => {
+  let controller: AbortControllerT;
+  // $FlowFixMe - flow have no types for AbortController and co
+  controller = new AbortController();
+  return [controller, once(() => baseFruitRequest(controller.signal, form))];
+};
+
+const baseFruitRequest = async (
+  signal: AbortControllerSignal,
+  form: FruitForm
+) => {
   const endpoint =
     process.env.NODE_ENV === "development" ? "/fruits" : "/fruits.json";
-  const response = await request(`${endpoint}?${queryToString(form)}`);
+  const response = await request(`${endpoint}?${queryToString(form)}`, {
+    signal
+  });
   if (!response.ok) throw new Error("Non 200 response");
   return is(await response.json(), fruitResponseShape);
 };
 
-const cache = new Cache<string, Promise<FruitResponse>>({
+const cache = new Cache<
+  string,
+  [AbortControllerT, () => Promise<FruitResponse>]
+>({
   max: 5,
   maxAge: 60000
 });
 
-export const fruitRequest = (form: FruitForm): Promise<FruitResponse> => {
+export const fruitRequestCreator = (form: FruitForm) => {
   const query = queryToString(form);
   let result = cache.get(query);
   if (!result) {
-    result = baseFruitRequest(form);
+    result = baseFruitRequestCreator(form);
     cache.set(query, result);
   }
   return result;
@@ -42,6 +73,6 @@ export const fruitRequest = (form: FruitForm): Promise<FruitResponse> => {
 
 export const prefetch = async (form: FruitForm): Promise<void> => {
   try {
-    await fruitRequest(form);
+    await fruitRequestCreator(form)[1]();
   } catch (e) {}
 };
