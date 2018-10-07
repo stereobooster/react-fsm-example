@@ -1,42 +1,39 @@
 // @flow
 
-const promiseRacePonyfill = <T>(values: Array<Promise<T>>): Promise<T> => {
-  return new Promise((resolve, reject) => {
-    values.forEach(value => {
-      Promise.resolve(value).then(resolve, reject);
-    });
-  });
-};
+// translation of https://dom.spec.whatwg.org/#abortcontroller
+// because flow have no types for AbortController and co
+declare interface AbortSignal extends EventTarget {
+  +aborted: boolean;
+  onabort: EventHandler;
+}
+declare class AbortController {
+  +signal: AbortSignal;
+  abort: () => void;
+}
 
-const promiseWithTimeout = <T>(
-  promise: Promise<T>,
-  delay: number
-): Promise<T> => {
-  const timer = new Promise((resolve, reject) => {
-    setTimeout(() => reject(new Error("Timeout for Promise")), delay);
-  });
-
-  return promiseRacePonyfill([promise, timer]).then(response => response);
-};
-
-type ExtractOptionsType = <T>((string, T) => Promise<mixed>) => T;
-type FetchOptions = $Call<ExtractOptionsType, typeof fetch>;
-type RequestOptions = {
-  ...FetchOptions,
-  timeout: number
-};
+type RequestOptionsTimeout = {|
+  ...$Exact<RequestOptions>,
+  signal?: AbortSignal,
+  timeout?: number
+|};
 
 // fetch with timeout
-export default (url: string, options: RequestOptions = {}) => {
-  const { timeout = 5000, ...rest } = options;
-  return promiseWithTimeout(
-    fetch(url, { credentials: "same-origin", ...rest }),
-    timeout
-  );
+export default (url: string, options?: RequestOptionsTimeout) => {
+  let { timeout = 5000, signal, ...rest } = options || {};
+  if (signal !== undefined)
+    throw new Error("Signal not supported in timeoutable fetch");
+  const controller = new AbortController();
+  return new Promise<Response>((resolve, reject) => {
+    const timer = setTimeout(() => {
+      reject(new Error("Timeout for Promise"));
+      controller.abort();
+    }, timeout);
+    fetch(url, {
+      credentials: "same-origin",
+      signal: controller.signal,
+      ...options
+    })
+      .finally(() => clearTimeout(timer))
+      .then(resolve, reject);
+  });
 };
-
-export const pause = (timeout: number) =>
-  new Promise<void>(resolve => setTimeout(resolve, timeout));
-
-export const randomlyFail = (chance: number = 0.05) =>
-  Math.random() > chance ? Promise.resolve() : Promise.reject();

@@ -9,8 +9,6 @@
 
 More ideas:
 
-- Cancel request instead of blocking button
-- Remove errored requests from cache
 - Try out immer.js
 - Try out io-ts for forms
 - Report sarcastic errors to the server
