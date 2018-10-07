@@ -10,6 +10,6 @@ module.exports = function(app) {
     setTimeout(() => {
       res.set("Cache-Control", "public, max-age=300");
       res.send(fruits);
-    }, 100 + Math.random() * 1900)
+    }, 10000 + Math.random() * 1900)
   );
 };
