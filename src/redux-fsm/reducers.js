@@ -32,7 +32,8 @@ export default (
 ): Loop<State, Actions> | State => {
   switch (action.type) {
     case "SUBMIT_FRUIT":
-      switch (reduxState.state) {
+      const currentState = reduxState.state;
+      switch (currentState) {
         case "initial":
         case "fruit_error":
         case "fruit_ok":
@@ -62,9 +63,7 @@ export default (
             Cmd.list([submitForm, navigateToTheNextPage])
           );
         default:
-          // exhaustive check doesn't work here, because "initial", "fruit_error"
-          // and "fruit_ok" are crumpled together
-          // exhaustiveCheck(reduxState.state);
+          exhaustiveCheck(currentState);
           return reduxState;
       }
     case "SUBMIT_FRUIT_ERROR":
